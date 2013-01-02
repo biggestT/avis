@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+ 
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<meta name="description" content="Audio Visualizer">
+	<meta name="keywords" content="joy division, audio, visualization,Web audio ,JavaScript">
+	<meta name="author" content="Tor Nilsson Öhrn">
+    <title>AVis</title>
+    <script type="text/javascript" src="jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="AvisViewer.js"></script>
+    <script type="text/javascript" src="AvisModel.js"></script>
+    <script type="text/javascript" src="ObserverList.js"></script>
+    <script type="text/javascript" src="remoteAudioPlayer.js"></script>
+	<link type="text/css" rel="stylesheet" href="avis.css">
+	<script type="text/javascript">
+	var context;
+	var model;
+	var audio;
+	var currentTime = 0;
+
+	function initialize() {
+	  	context = new webkitAudioContext();
+	  	// Setup frequency model
+	  	model = new AvisModel(1024, 10, context);
+	  	console.log(model);
+	  	consoleViewer = new ConsoleViewer();
+	  	console.log(consoleViewer);
+	  	model.addObserver(consoleViewer);
+			// Load MP3 with RemoteAudioPlayer by https://github.com/0xfe 
+			audio = new RemoteAudioPlayer(context, "audio/gyptian-major-lazer.mp3");
+			audio.load(function() {
+				$('#play').text("Play");
+				$('#play').click(play);
+			});
+	}
+
+	function play() {
+		
+		var source = audio.getSource();
+  	var analyser = model.getAnalyser();
+	  // Connect nodes for routing
+	  source.connect(analyser);
+	  source.connect(context.destination);
+		
+	  // Play audio
+	  audio.reload();
+	  // paus function not working atm
+	  source.noteOn(currentTime, -0.2);
+
+	  // Enable graphs
+	  model.enable();
+
+	  $('#play').text("Stop");
+	  $('#play').click(stop);
+	}
+
+	function stop() {
+		// save current time
+		currentTime = context.currentTime;
+		//console.log(currentTime);
+	  // Disable visualisation and sound
+	  model.disable();
+		audio.getSource().disconnect();
+
+	  $('#play').text("Play");
+	  $('#play').click(play);
+	}
+
+	// starts everything when page is loaded
+	$(function() { initialize(); });
+
+	</script>
+</head>
+<body>
+	<div id="play"></div>
+</body>
+</html>

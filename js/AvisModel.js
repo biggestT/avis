@@ -16,7 +16,7 @@ AvisModel.prototype.init = function( resolution, nBands, audioContext ) {
   this.bands = nBands;
   this.resolution = resolution;
   this.updateRate = 50; // in milliseconds
-  this.smoothing = 0.75;
+  this.smoothing = 0.80;
   this.audioContext = audioContext;
   this.amplitudes = new Array();
   // Create the spectral analyzer
@@ -61,16 +61,18 @@ AvisModel.prototype.removeObserver = function( observer ){
 AvisModel.prototype.notify = function(){
   var observerCount = this.observers.Count();
   data = this.data;
+  this.analyser.smoothingTimeConstant = this.smoothing;
   this.analyser.getByteFrequencyData(data);
   var length = data.length;
   // Break the samples up into bins
   var binSize = Math.floor( length / this.bands );
   for (var i=0; i < this.bands; ++i) {
-    var amplitude = 0
+    var sum = 0
     for (var j=0; j < binSize; ++j) {
-      amplitude += data[(i * binSize) + j];
+      sum += data[(i * binSize) + j];
     }
-    this.amplitudes[i] = amplitude;
+    // add the average amplitude to the output array
+    this.amplitudes[i] = sum / binSize;
   }
   
   // place the current frequencydata in the array data

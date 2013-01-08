@@ -1,7 +1,6 @@
 
 // All the viewers are Observers
 function ConsoleViewer(){
-    this.index = 1;
     // update viewer with the amplitudes array from model
     this.update = function( amplitudes ){
         //console.log( amplitudes );
@@ -10,7 +9,6 @@ function ConsoleViewer(){
 
 
 function FlatViewer( canvasId ){
-    this.index = 2;
     this.canvas = document.getElementById(canvasId);
   	this.width = this.canvas.width;
   	this.height = this.canvas.height;
@@ -38,7 +36,6 @@ function FlatViewer( canvasId ){
 }
 
 function CircleViewer( canvasId ){
-    this.index = 3;
     this.canvas = document.getElementById(canvasId);
     this.width = this.canvas.width;
     this.height = this.canvas.height;

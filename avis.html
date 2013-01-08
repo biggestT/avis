@@ -8,11 +8,33 @@
 	<meta name="author" content="Tor Nilsson Öhrn">
     <title>AVis</title>
     <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
-    <script type="text/javascript" src="js/AvisViewer.js"></script>
-    <script type="text/javascript" src="js/AvisModel.js"></script>
-    <script type="text/javascript" src="js/ObserverList.js"></script>
+    <script type="text/javascript" src="js/glMatrix-0.9.5.min.js"></script>
+    <script type="text/javascript" src="js/avisViewer.js"></script>
+    <script type="text/javascript" src="js/glViewer.js"></script>
+    <script type="text/javascript" src="js/avisModel.js"></script>
+    <script type="text/javascript" src="js/observerList.js"></script>
+    <script type="text/javascript" src="js/cameracontroller.js"></script>
     <script type="text/javascript" src="js/remoteAudioPlayer.js"></script>
+
 	<link type="text/css" rel="stylesheet" href="avis.css">
+	<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    void main(void) {
+      gl_FragColor = vec4(1.0, 0.5, 1.0, 1.0);
+    }
+	</script>
+
+	<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    void main(void) {
+      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    }
+	</script>
 	<script type="text/javascript">
 	var context;
 	var model;
@@ -31,15 +53,19 @@
 	  	console.log(consoleViewer);
 	  	flatViewer = new FlatViewer( 'canvas1' );
 	  	flatViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
+	  	glViewer = new GlViewer( 'canvas2' );
+	  	console.log(glViewer);
+	  	// glViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
 	  	circleViewer = new CircleViewer( 'canvas3' );
 	  	circleViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
 	  	// Connect the different views to the model
 	  	model.addObserver( circleViewer );
 	  	model.addObserver( flatViewer );
+	  	model.addObserver( glViewer );
 	  	model.addObserver( consoleViewer );
 
 		// Load MP3 with RemoteAudioPlayer by https://github.com/0xfe 
-		audio = new RemoteAudioPlayer( context, 'audio/gyptian-major-lazer.mp3' );
+		audio = new RemoteAudioPlayer( context, 'audio/klaymen-curious.ogg' );
 		audio.load(function() {
 			$('#play').text("Play");
 			$('#play').click(play);
@@ -86,7 +112,7 @@
 <body>
 	<div id="play"></div>
 	<canvas id="canvas1" width="600" height="300"></canvas>
-	<canvas id="canvas2" width="600" height="300"></canvas>
+	<canvas id="canvas2" width="500" height="500"></canvas>
 	<canvas id="canvas3" width="600" height="300"></canvas>
 </body>
 </html>

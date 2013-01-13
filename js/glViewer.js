@@ -4,29 +4,24 @@ var model = 0;
 var view = 0;
 var projection = 0;
 
-var modelStack = [];
+var mMatrixStack = [];
 
 function degToRad(degrees) {
         return degrees * Math.PI / 180;
 }
 
-function pushMatrix(stack, matrix) {
-	var copy = mat4.create();
-	mat4.set(matrix, copy);
-	stack.push(copy);
-	return stack;
+function mPushMatrix() {
+        var copy = mat4.create();
+        mat4.set(model, copy);
+        mMatrixStack.push(copy);
 }
 
-function popMatrix(stack) {
-	var matrix;
-	if (stack.length == 0) {
-	  throw "Invalid popMatrix!";
-	}
-	matrix = stack.pop();
-	return matrix;
+function mPopMatrix() {
+    if (mMatrixStack.length == 0) {
+        throw "Invalid popMatrix!";
+    }
+    model = mMatrixStack.pop();
 }
-
-
 
 function getShader(gl, id) {
 	var shaderScript = document.getElementById(id);
@@ -83,6 +78,9 @@ function initShaders (gl) {
 	shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
 	gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
+ shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
+ gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+
 	shaderProgram.projection = gl.getUniformLocation(shaderProgram, "projection");
 	shaderProgram.model = gl.getUniformLocation(shaderProgram, "model");
 	shaderProgram.view = gl.getUniformLocation(shaderProgram, "view");
@@ -99,25 +97,40 @@ function initShaders (gl) {
 
 }
 
-function initBuffers (gl) {
-	squareVertexPositionBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
-  vertices = [
-       0.0,  0.0,  0.0,
-       1.0,  1.0,  0.0,
-       1.0,  1.0,  0.0,
-       2.0,  7.0,  0.0,
-  ];
+function initBuffers (gl, vertices, colors) {
+	lineVertexPositionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexPositionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-  squareVertexPositionBuffer.itemSize = 3;
-  squareVertexPositionBuffer.numItems = 4;
+  lineVertexPositionBuffer.itemSize = 3;
+  lineVertexPositionBuffer.numItems = vertices.length/3;
+
+  lineVertexColorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexColorBuffer);
+ 
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  lineVertexColorBuffer.itemSize = 4;
+  lineVertexColorBuffer.numItems = vertices.length/3;
 }
 
-GlViewer = function(canvasId) {
-	var triangleVertexPositionBuffer;
+GlViewer = function(canvasId, bands, length) {
+	var lineVertexPositionBuffer;
+	var lineVertexColorBuffer;
+
 
   this.backgroundColor = [0.0, 0.0, 0.0, 1.0];
-  this.foregroundColor = [1.0, 1.0, 1.0, 1.0];
+
+  this.bandSpace = 0.3;
+  this.timeSpace = 0.2;
+  // initialize 2 dimensional spectogram 
+  this.bands = bands;
+  this.spectogram = new Array();
+  for (var i=0; i<length; i++) {
+  	this.spectogram[i] = new Array();
+  	for (var j=0; j<bands; j++) {
+  		this.spectogram[i][j] = 0;
+  	}
+  }
+  console.log(this.spectogram);
 
 	this.initGL(canvasId);
 	console.log(" Gl created ");
@@ -127,6 +140,8 @@ GlViewer.prototype.initGL = function(canvasId) {
 	model = mat4.create();
 	view = mat4.create();
 	projection = mat4.create();
+
+	
 	
 	var backgroundColor = this.backgroundColor;
 
@@ -142,16 +157,13 @@ GlViewer.prototype.initGL = function(canvasId) {
 	this.cameraController.yRot = 0; 
 	 
 	this.shaderProgram = initShaders(this.gl);
-	initBuffers(this.gl, this.shaderProgram);
+	// initBuffers(this.gl, this.shaderProgram);
 	
 	this.gl.clearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
 	this.gl.enable(this.gl.DEPTH_TEST);
 
 	model = mat4.create();
-  projection = mat4.create();
-
-	console.log(" initGL  ");
-	// console.log(model);           
+  projection = mat4.create();         
 
 }
 
@@ -168,41 +180,44 @@ GlViewer.prototype.drawScene = function () {
 
   mat4.identity(view);
   
+  
+  mat4.identity(model);
+  mat4.translate(model, [-10.0, 0.0, -20.0]);
+
+  
 
   // Add in camera controller's rotation
-  mat4.identity(model);
-  mat4.translate(model, [-2.0, 0.0, -50.0]);
-  
-  mat4.rotate(model, this.cameraController.xRot, [1, 0, 0]);
-  mat4.rotate(model, this.cameraController.yRot, [0, 1, 0]);
+  	mat4.translate(model, [this.timeSpace*this.spectogram.length/2, 0.0, this.bandSpace*this.bands/2]);
+		  mat4.rotate(model, this.cameraController.xRot*0.2, [1, 0, 0]);
+		  mat4.rotate(model, this.cameraController.yRot*0.2, [0, 1, 0]);
+	  mat4.translate(model, [-this.timeSpace*this.spectogram.length/2, 0.0, this.bandSpace*this.bands/2]);
 
-	// pushMatrix(modelStack, model);
+		for (var i=0; i<this.bands; i++) {
+				var vertices = new Array();
+				var colors = new Array();
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+				for (var j=0; j<this.spectogram.length; j++) {
+					vertices = vertices.concat([j*this.timeSpace, this.spectogram[j][i]/100, 0]);
+					colors = colors.concat([this.spectogram[j][i]/255+0.1, this.spectogram[j][i]/255+0.1, this.spectogram[j][i]/255+0.1, 1.0]);
+				}
+		
+				initBuffers(gl, vertices, colors);
+				mPushMatrix();
+	    		mat4.translate(model, [0.0, 0.0, i*this.bandSpace]);
+					gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexPositionBuffer);
+	    		gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, lineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    setMatrixUniforms(gl, shaderProgram);
-    gl.drawArrays(gl.LINES, 0, squareVertexPositionBuffer.numItems);
+	    		gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexColorBuffer);
+    			gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, lineVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-	// model = popMatrix(modelStack);
+	    		setMatrixUniforms(gl, shaderProgram);
+	    		gl.drawArrays(gl.LINE_STRIP, 0, lineVertexPositionBuffer.numItems);
+	    	mPopMatrix();
+		}
 	
 }
-
-var lastTime = 0;
-
-GlViewer.prototype.animate = function () {
-  var timeNow = new Date().getTime();
-  if (lastTime != 0) {
-    var elapsed = timeNow - lastTime;
-
-    this.rTri += (90 * elapsed) / 1000.0;
-    this.rSquare += (75 * elapsed) / 1000.0;
-  }
-	lastTime = timeNow;
-}
-
-
-  
 GlViewer.prototype.update = function(amplitudes) {
-	// this.drawScene();
+	var thisAmplitude = amplitudes.slice(0);
+	this.spectogram.unshift(thisAmplitude);
+	this.spectogram.pop();
 }

@@ -16,7 +16,7 @@ AvisModel.prototype.init = function( resolution, nBands, audioContext ) {
   this.bands = nBands;
   this.resolution = resolution;
   this.updateRate = 50; // in milliseconds
-  this.smoothing = 0.80;
+  this.smoothing = 0.45;
   this.audioContext = audioContext;
   this.amplitudes = new Array();
   // Create the spectral analyzer

@@ -197,8 +197,10 @@ GlViewer.prototype.drawScene = function () {
 				var colors = new Array();
 
 				for (var j=0; j<this.spectogram.length; j++) {
-					vertices = vertices.concat([j*this.timeSpace, this.spectogram[j][i]/100, 0]);
-					colors = colors.concat([this.spectogram[j][i]/255+0.1, this.spectogram[j][i]/255+0.1, this.spectogram[j][i]/255+0.1, 1.0]);
+					vertices = vertices.concat([j*this.timeSpace, 3*Math.pow(this.spectogram[j][i]/255, 5), 0]);
+
+					var intensity = (this.spectogram[j][i]/255+0.05)*(1-1/(this.spectogram.length/2)*(Math.abs(this.spectogram.length/2-j)));
+					colors = colors.concat([intensity, intensity, intensity, 1.0]);
 				}
 		
 				initBuffers(gl, vertices, colors);

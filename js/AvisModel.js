@@ -23,7 +23,6 @@ AvisModel.prototype.init = function( resolution, nBands, audioContext ) {
   this.analyser = this.audioContext.createAnalyser();
   this.analyser.fftSize = this.resolution;
   this.data = new Uint8Array(this.analyser.frequencyBinCount);
-
 }
 
 AvisModel.prototype.getAnalyser = function() {
@@ -79,6 +78,7 @@ AvisModel.prototype.notify = function(){
   for(var i=0; i < observerCount; i++){
     this.observers.Get(i).update( this.amplitudes );
   }
+  // console.log(this.amplitudes);
 };
 
 

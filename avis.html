@@ -2,6 +2,7 @@
  
 <html>
 <head>
+
 	<meta charset="utf-8"/>
 	<meta name="description" content="Audio Visualizer">
 	<meta name="keywords" content="joy division, audio, visualization,Web audio ,JavaScript">
@@ -16,7 +17,6 @@
     <script type="text/javascript" src="js/avisModel.js"></script>
     
     <script type="text/javascript" src="js/cameracontroller.js"></script>
-    <script type="text/javascript" src="js/remoteAudioPlayer.js"></script>
 
 	<link type="text/css" rel="stylesheet" href="avis.css">
 	<script id="shader-fs" type="x-shader/x-fragment">
@@ -46,69 +46,54 @@
 	<script type="text/javascript">
 	var context;
 	var audioAnalyser;
-	var audio;
 	var currentTime = 0;
 
-	
-	function initialize() {
-	  	context = new webkitAudioContext();
-
-	  	// Setup frequency audioAnalyser
-	  	audioAnalyser = new AvisModel(512, 25, context);
-	  	console.log(audioAnalyser);
-
-	  	// Setup different viewers
-	  	// consoleViewer = new ConsoleViewer();
-	  	// console.log(consoleViewer);
-	  	// flatViewer = new FlatViewer( 'canvas2' );
-	  	// flatViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
-	  	glViewer = new GlViewer( 'canvas1', audioAnalyser.bands, 40 );
-	  	console.log(glViewer);
-	  	// glViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
-	  	// circleViewer = new CircleViewer( 'canvas3' );
-	  	// circleViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
-	  	// Connect the different views to the audioAnalyser
-	  	console.log(audioAnalyser);
-	  	// audioAnalyser.addObserver( circleViewer );
-	  	// audioAnalyser.addObserver( flatViewer );
-	  	audioAnalyser.addObserver( glViewer );
-	  	// audioAnalyser.addObserver( consoleViewer );
-
-	  	// test draw WebGL content
-	  	glViewer.drawScene();
-
-		// Load MP3 with RemoteAudioPlayer by https://github.com/0xfe 
-		audio = new RemoteAudioPlayer( context, 'audio/klaymen-curious.ogg' );
-		audio.load(function() {
-			$('#play').text("Play");
-			$('#play').click(play);
-			tick();
-		});
-	}
-	// Run animation loop 
+// Run animation loop 
 	function tick() {
 		requestAnimFrame(tick);
 		glViewer.drawScene();
+		}
+	function initialize() {
+
+			audio = new Audio();
+			audio.src = 'https://api.soundcloud.com/tracks/293/stream.json?client_id=8acdc76bf6b2d52bce4ec1f2ad4f07bc';
+			// audio.src = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/swagistin/lil-wayne-a-milli&client_id=8acdc76bf6b2d52bce4ec1f2ad4f07bc';
+			audio.controls = true;
+			audio.autoplay = false;
+			$('#player').append(audio);
+			$('#player').hide();
+			// $(audio).hide();
+	  	context = new webkitAudioContext();
+	  	
+	  	// Setup frequency auardioAnalyser
+	  	audioAnalyser = new AvisModel(512, 25, context);
+	  	console.log(audioAnalyser);
+
+
+	  	glViewer = new GlViewer( 'canvas1', audioAnalyser.bands, 40 );
+
+	  	audioAnalyser.addObserver( glViewer );
+
+			$('#start').text("Start Application");
+			$('#start').click(play);
 	}
+	
 
 	function play() {
-		
-		var source = audio.getSource();
-  	var analyser = audioAnalyser.getAnalyser();
-	  // Connect nodes for routing
-	  source.connect(analyser);
-	  source.connect(context.destination);
-		
-	  // Play audio
-	  audio.reload();
-	  // paus function not working atm
-	  source.noteOn(currentTime, -0.2);
+				
+			source = context.createMediaElementSource(audio);
+			console.log(source);
+	  	var analyser = audioAnalyser.getAnalyser();
 
-	  // Enable graphs
-	  audioAnalyser.enable();
-
-	  $('#play').text("Stop");
-	  $('#play').click(stop);
+		  // Connect nodes for routing
+		  source.connect(analyser);
+		  source.connect(context.destination);
+		  
+		  audioAnalyser.enable();
+		  audio.play();
+			tick();
+			$('#start').hide();
+			$('#player').show();
 	}
 
 	function stop() {
@@ -117,28 +102,30 @@
 		//console.log(currentTime);
 	  // Disable visualisation and sound
 	  audioAnalyser.disable();
-		audio.getSource().disconnect();
-
+	  audio.stop();
 	  $('#play').text("Play");
 	  $('#play').click(play);
 	}
 
 	// starts everything when page is loaded
-	$(function() { initialize(); });
+	$(function() { 
+
+		initialize(); 
+	});
 
 	</script>
 </head>
 <body>
-	<div id="play">loading soundfile ...</div>
-	
+	<div id="start"></div>
+	<div id="player"></div>
 	<canvas id="canvas1" width="600" height="300"></canvas>
 	<div id="text">
-		<p> <a href="https://github.com/biggestT/avis">SourceCode</a></p>
+		<p> <a href="https://github.com/biggestT/avis">SourceCode (work in progress)</a></p>
 		</br></br>
 		<p>Put together by <a href="http://tornilssonohrn.com">Tor Nilsson Öhrn</a></p>
 		<p>Music by <a href="https://soundcloud.com/klaymen-1">Klaymen</a></p>
 		<p>Original idea by <a href="http://riseby.tumblr.com/">Emil Riseby</a></p>
-		<p>Code inspired by:</p>
+		<p>Some parts of the code from:</p>
 		<p><a href="http://0xfe.blogspot.se">0xFE</a></p>
 		<p><a href="http://learningwebgl.com">Learning WebGL</a></p>
 		<p><a href="https://github.com/cwilso">Chris Wilson</a></p>
@@ -147,4 +134,5 @@
 	<!-- <canvas id="canvas3" width="600" height="300"></canvas> -->
 
 </body>
+
 </html>

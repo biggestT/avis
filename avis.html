@@ -54,25 +54,25 @@
 	  	context = new webkitAudioContext();
 
 	  	// Setup frequency audioAnalyser
-	  	audioAnalyser = new AvisModel(1024, 20, context);
+	  	audioAnalyser = new AvisModel(512, 25, context);
 	  	console.log(audioAnalyser);
 
 	  	// Setup different viewers
-	  	consoleViewer = new ConsoleViewer();
-	  	console.log(consoleViewer);
-	  	flatViewer = new FlatViewer( 'canvas2' );
-	  	flatViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
-	  	glViewer = new GlViewer( 'canvas1', audioAnalyser.bands, 100 );
+	  	// consoleViewer = new ConsoleViewer();
+	  	// console.log(consoleViewer);
+	  	// flatViewer = new FlatViewer( 'canvas2' );
+	  	// flatViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
+	  	glViewer = new GlViewer( 'canvas1', audioAnalyser.bands, 40 );
 	  	console.log(glViewer);
 	  	// glViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
-	  	circleViewer = new CircleViewer( 'canvas3' );
-	  	circleViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
+	  	// circleViewer = new CircleViewer( 'canvas3' );
+	  	// circleViewer.getCanvasContext().fillStyle = 'rgb(250, 250, 250)';
 	  	// Connect the different views to the audioAnalyser
 	  	console.log(audioAnalyser);
-	  	audioAnalyser.addObserver( circleViewer );
-	  	audioAnalyser.addObserver( flatViewer );
+	  	// audioAnalyser.addObserver( circleViewer );
+	  	// audioAnalyser.addObserver( flatViewer );
 	  	audioAnalyser.addObserver( glViewer );
-	  	audioAnalyser.addObserver( consoleViewer );
+	  	// audioAnalyser.addObserver( consoleViewer );
 
 	  	// test draw WebGL content
 	  	glViewer.drawScene();
@@ -129,9 +129,22 @@
 	</script>
 </head>
 <body>
-	<div id="play"></div>
+	<div id="play">loading soundfile ...</div>
+	
 	<canvas id="canvas1" width="600" height="300"></canvas>
-	<canvas id="canvas2" width="600" height="300"></canvas>
-	<canvas id="canvas3" width="600" height="300"></canvas>
+	<div id="text">
+		<p> <a href="https://github.com/biggestT/avis">SourceCode</a></p>
+		</br></br>
+		<p>Put together by <a href="http://tornilssonohrn.com">Tor Nilsson Öhrn</a></p>
+		<p>Music by <a href="https://soundcloud.com/klaymen-1">Klaymen</a></p>
+		<p>Original idea by <a href="http://riseby.tumblr.com/">Emil Riseby</a></p>
+		<p>Code inspired by:</p>
+		<p><a href="http://0xfe.blogspot.se">0xFE</a></p>
+		<p><a href="http://learningwebgl.com">Learning WebGL</a></p>
+		<p><a href="https://github.com/cwilso">Chris Wilson</a></p>
+	</div>
+	<!-- <canvas id="canvas2" width="600" height="300"></canvas> -->
+	<!-- <canvas id="canvas3" width="600" height="300"></canvas> -->
+
 </body>
 </html>

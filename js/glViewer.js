@@ -1,3 +1,5 @@
+var TYPE_MIRROR = 0;
+var TYPE_STRETCH = 1;
 
 // Matrices
 var model = 0;
@@ -118,9 +120,13 @@ GlViewer = function(canvasId, bands, length) {
 
 
   this.backgroundColor = [0.0, 0.0, 0.0, 1.0];
-
-  this.bandSpace = 0.3;
-  this.timeSpace = 0.2;
+  this.type = TYPE_MIRROR;
+  this.bandSpace = 0.4;
+  this.timeSpace = 0.4;
+  if (this.type == TYPE_STRETCH) {
+  	this.timeSpace = this.timeSpace*2;
+  }
+  
   // initialize 2 dimensional spectogram 
   this.bands = bands;
   this.spectogram = new Array();
@@ -167,6 +173,38 @@ GlViewer.prototype.initGL = function(canvasId) {
 
 }
 
+GlViewer.prototype.drawLines = function (gl, shaderProgram, mirrorZ, mirrorX) {
+		for (var i=0; i<this.bands; i++) {
+				var vertices = new Array();
+				var colors = new Array();
+
+				for (var j=0; j<this.spectogram.length; j++) {
+					vertices = vertices.concat([mirrorX*j*this.timeSpace, this.spectogram[j][i]/255*Math.pow(this.spectogram[j][i]/100, 2), 0]);
+
+					var intensity = (this.spectogram[j][i]/255+0.05);
+					// if (this.type == TYPE_STRETCH) {
+						// intensity = intensity*(1-1/(this.spectogram.length/2)*(Math.abs(this.spectogram.length/2-j)));
+					// }
+					// else {
+						intensity = intensity*2*(1/(this.spectogram.length/2)*(this.spectogram.length/2-j));
+					// }
+					colors = colors.concat([intensity, intensity, intensity, 1.0]);
+				}
+		
+				initBuffers(gl, vertices, colors);
+				mPushMatrix();
+	    		mat4.translate(model, [0.0, 0.0, mirrorZ*i*this.bandSpace]);
+					gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexPositionBuffer);
+	    		gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, lineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	    		gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexColorBuffer);
+    			gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, lineVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	    		setMatrixUniforms(gl, shaderProgram);
+	    		gl.drawArrays(gl.LINE_STRIP, 0, lineVertexPositionBuffer.numItems);
+	    	mPopMatrix();
+		}
+}
 
 GlViewer.prototype.drawScene = function () {
 	var gl = this.gl;
@@ -182,40 +220,31 @@ GlViewer.prototype.drawScene = function () {
   
   
   mat4.identity(model);
-  mat4.translate(model, [-10.0, 0.0, -20.0]);
 
+  if (this.type == TYPE_STRETCH) {
+  	mat4.translate(model, [-10.0, 0.0, 0.0]);
+
+  }
+  mat4.translate(model, [0.0, 0.0, -15.0]);
+
+  // mat4.translate(model, [this.timeSpace*this.spectogram.length, 0.0, this.bandSpace*this.bands]);
+		  mat4.rotate(model, this.cameraController.xRot*0.2, [1, 0, 0]);
+		  mat4.rotate(model, this.cameraController.yRot*0.2, [0, 1, 0]);
+	  // mat4.translate(model, [-this.timeSpace*this.spectogram.length, 0.0, -this.bandSpace*this.bands]);
   
 
   // Add in camera controller's rotation
-  	mat4.translate(model, [this.timeSpace*this.spectogram.length/2, 0.0, this.bandSpace*this.bands/2]);
-		  mat4.rotate(model, this.cameraController.xRot*0.2, [1, 0, 0]);
-		  mat4.rotate(model, this.cameraController.yRot*0.2, [0, 1, 0]);
-	  mat4.translate(model, [-this.timeSpace*this.spectogram.length/2, 0.0, this.bandSpace*this.bands/2]);
-
-		for (var i=0; i<this.bands; i++) {
-				var vertices = new Array();
-				var colors = new Array();
-
-				for (var j=0; j<this.spectogram.length; j++) {
-					vertices = vertices.concat([j*this.timeSpace, 3*Math.pow(this.spectogram[j][i]/255, 5), 0]);
-
-					var intensity = (this.spectogram[j][i]/255+0.05)*(1-1/(this.spectogram.length/2)*(Math.abs(this.spectogram.length/2-j)));
-					colors = colors.concat([intensity, intensity, intensity, 1.0]);
-				}
-		
-				initBuffers(gl, vertices, colors);
-				mPushMatrix();
-	    		mat4.translate(model, [0.0, 0.0, i*this.bandSpace]);
-					gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexPositionBuffer);
-	    		gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, lineVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	    		gl.bindBuffer(gl.ARRAY_BUFFER, lineVertexColorBuffer);
-    			gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, lineVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-	    		setMatrixUniforms(gl, shaderProgram);
-	    		gl.drawArrays(gl.LINE_STRIP, 0, lineVertexPositionBuffer.numItems);
-	    	mPopMatrix();
-		}
+  	
+	  this.drawLines(gl, shaderProgram, 1.0, 1.0);
+	  	
+		  	mat4.rotate(model, degToRad(180), [0, 1, 0]);
+		  	if (this.type == TYPE_MIRROR) {
+		  	this.drawLines(gl, shaderProgram, -1.0, 1.0);
+		  }
+		  else {
+		  	this.drawLines(gl, shaderProgram, 1.0, -1.0);
+		  }
+	  
 	
 }
 GlViewer.prototype.update = function(amplitudes) {

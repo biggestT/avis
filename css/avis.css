@@ -1,0 +1,40 @@
+body{
+	background-color: #000;
+	color:#FFF;
+	text-align:center;
+	font-family: 'Simonetta';}
+	canvas {
+		width: 1000px;
+		height: auto;}
+	a {
+		text-decoration: none;
+
+		color: white;
+	}
+	a:hover {
+		border-bottom: 1px dotted;
+	}
+	#startButton {
+		padding: 20px;
+		margin: 200px 0px 20px 0px;
+	}
+	#accordion {
+		margin: 20px auto 0px auto;
+		width: 300px;
+		color: black;
+		font-size: 10px;
+		text-align: center;
+	}
+	#soundcloudLogo {
+		width: 104px;
+		text-align: center;
+		margin: 20px auto 0px auto;
+		text-align: center;
+	}
+	.form-text {
+			margin-top: 50px;
+			font-size:1em;
+			border:none;
+			text-align:center;
+			padding: 20px;
+		}

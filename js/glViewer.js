@@ -120,10 +120,10 @@ GlViewer = function(canvasId, bands, length) {
 
 
   this.backgroundColor = [0.0, 0.0, 0.0, 1.0];
-  this.type = TYPE_MIRROR;
+  this.mirrorStyle = TYPE_MIRROR;
   this.bandSpace = 0.4;
   this.timeSpace = 0.4;
-  if (this.type == TYPE_STRETCH) {
+  if (this.mirrorStyle == TYPE_STRETCH) {
   	this.timeSpace = this.timeSpace*2;
   }
   
@@ -173,6 +173,17 @@ GlViewer.prototype.initGL = function(canvasId) {
 
 }
 
+GlViewer.prototype.changeType = function(type) {
+	if (this.mirrorStyle == TYPE_STRETCH) {
+		this.mirrorStyle = TYPE_MIRROR;
+	}
+	else {
+		this.mirrorStyle = TYPE_STRETCH; 
+	}
+		console.log(this.mirrorStyle);
+}
+
+
 GlViewer.prototype.drawLines = function (gl, shaderProgram, mirrorZ, mirrorX) {
 		for (var i=0; i<this.bands; i++) {
 				var vertices = new Array();
@@ -182,12 +193,13 @@ GlViewer.prototype.drawLines = function (gl, shaderProgram, mirrorZ, mirrorX) {
 					vertices = vertices.concat([mirrorX*j*this.timeSpace, this.spectogram[j][i]/255*Math.pow(this.spectogram[j][i]/100, 2), 0]);
 
 					var intensity = (this.spectogram[j][i]/255+0.05);
-					// if (this.type == TYPE_STRETCH) {
-						// intensity = intensity*(1-1/(this.spectogram.length/2)*(Math.abs(this.spectogram.length/2-j)));
-					// }
-					// else {
+					if (this.mirrorStyle == TYPE_STRETCH) {
+						intensity = intensity*(1-1/(this.spectogram.length/2)*(Math.abs(this.spectogram.length/2-j)));
+						console.log('inside stretch draw');
+					}
+					else {
 						intensity = intensity*2*(1/(this.spectogram.length/2)*(this.spectogram.length/2-j));
-					// }
+					}
 					colors = colors.concat([intensity, intensity, intensity, 1.0]);
 				}
 		
@@ -221,7 +233,7 @@ GlViewer.prototype.drawScene = function () {
   
   mat4.identity(model);
 
-  if (this.type == TYPE_STRETCH) {
+  if (this.mirrorStyle == TYPE_STRETCH) {
   	mat4.translate(model, [-10.0, 0.0, 0.0]);
 
   }
@@ -238,7 +250,7 @@ GlViewer.prototype.drawScene = function () {
 	  this.drawLines(gl, shaderProgram, 1.0, 1.0);
 	  	
 		  	mat4.rotate(model, degToRad(180), [0, 1, 0]);
-		  	if (this.type == TYPE_MIRROR) {
+		  if (this.mirrorStyle == TYPE_MIRROR) {
 		  	this.drawLines(gl, shaderProgram, -1.0, 1.0);
 		  }
 		  else {

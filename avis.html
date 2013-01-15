@@ -8,17 +8,21 @@
 	<meta name="keywords" content="joy division, audio, visualization,Web audio ,JavaScript">
 	<meta name="author" content="Tor Nilsson Öhrn">
     <title>AVis</title>
+    <link type="text/css" href="css/smoothness/jquery-ui-1.9.2.custom.css" rel="stylesheet">
+    <link type="text/css"href="css/avis.css"  rel="stylesheet" >
+
     <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+		<script type="text/javascript" src="js/jquery-ui-1.9.2.custom.js"></script>
     <script type="text/javascript" src="js/glMatrix-0.9.5.min.js"></script>
     <script type="text/javascript" src="js/webgl-utils.js"></script>
     <script type="text/javascript" src="js/observerList.js"></script>
     <script type="text/javascript" src="js/avisViewer.js"></script>
     <script type="text/javascript" src="js/glViewer.js"></script>
     <script type="text/javascript" src="js/avisModel.js"></script>
-    
     <script type="text/javascript" src="js/cameracontroller.js"></script>
+     <script type="text/javascript" src="js/jquery.formdefaults.js"></script>
 
-	<link type="text/css" rel="stylesheet" href="avis.css">
+	
 	<script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
     varying vec4 vColor;
@@ -54,9 +58,16 @@
 		glViewer.drawScene();
 		}
 	function initialize() {
+			$("#trackId").formDefaults();
+			var trackNumber = $("#trackId").val();
 
+			trackNumber = 74455115;
+			$("#trackId").hide();
+			console.log(trackNumber);
+			
 			audio = new Audio();
-			audio.src = 'https://api.soundcloud.com/tracks/293/stream.json?client_id=8acdc76bf6b2d52bce4ec1f2ad4f07bc';
+			audio.src = 'https://api.soundcloud.com/tracks/' + trackNumber + '/stream.json?client_id=8acdc76bf6b2d52bce4ec1f2ad4f07bc';
+			
 			// audio.src = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/swagistin/lil-wayne-a-milli&client_id=8acdc76bf6b2d52bce4ec1f2ad4f07bc';
 			audio.controls = true;
 			audio.autoplay = false;
@@ -74,8 +85,18 @@
 
 	  	audioAnalyser.addObserver( glViewer );
 
-			$('#start').text("Start Application");
-			$('#start').click(play);
+	  	$('#accordion').accordion();
+	  	$('#accordion').accordion( "option", "collapsible", true );
+			$('#accordion').accordion( "option", "active", false );
+	  	$('#accordion').hide();
+	  	$('#canvas1').hide();
+	  	$('#soundcloudLogo').hide();
+	  	$('button').button();
+			$('#mirroring').click(glViewer.changeType);
+			$('#mirroring').hide();
+			$('#startButton').text("Start Application");
+			$('#startButton').click(play);
+			
 	}
 	
 
@@ -92,7 +113,11 @@
 		  audioAnalyser.enable();
 		  audio.play();
 			tick();
-			$('#start').hide();
+			$('#soundcloudLogo').show();
+			$('#accordion').show();
+			$('#canvas1').show();
+			$('#startButton').hide();
+			$(".form-text").hide();
 			$('#player').show();
 	}
 
@@ -116,19 +141,39 @@
 	</script>
 </head>
 <body>
-	<div id="start"></div>
-	<div id="player"></div>
+	
+	<div id="startMenu">
+		<button id="startButton">A button element</button>
+		<div>
+			<input id="trackId" class="form-text form-default-value-processed" type="text" value="soundcloud track number" style="color: rgb(204, 204, 204);"/>
+		</div>	
+	</div> 
+	
 	<canvas id="canvas1" width="600" height="300"></canvas>
-	<div id="text">
-		<p> <a href="https://github.com/biggestT/avis">SourceCode (work in progress)</a></p>
-		</br></br>
-		<p>Put together by <a href="http://tornilssonohrn.com">Tor Nilsson Öhrn</a></p>
-		<p>Music by <a href="https://soundcloud.com/klaymen-1">Klaymen</a></p>
-		<p>Original idea by <a href="http://riseby.tumblr.com/">Emil Riseby</a></p>
-		<p>Some parts of the code from:</p>
-		<p><a href="http://0xfe.blogspot.se">0xFE</a></p>
-		<p><a href="http://learningwebgl.com">Learning WebGL</a></p>
-		<p><a href="https://github.com/cwilso">Chris Wilson</a></p>
+	
+	<div id="player"></div>
+	<div id="soundcloud">
+		<img id="soundcloudLogo" src="images/soundcloud_logo_white.png" alt="soundcloud logo"/>
+	</div>
+	<div id="accordion">
+		<h3>Settings</h3>
+		<div>
+			<p>Coming soon ...</p>
+			<button class="settings" id="mirroring">Turn Mirroring On / Off</button>
+		</div>
+		<h3>Credits</h3>
+		<div>
+			<p>Put together by <a href="http://tornilssonohrn.com">Tor Nilsson Öhrn</a></p>
+			<p>Music by <a href="https://soundcloud.com/klaymen-1">Klaymen</a></p>
+			<p>Original idea by <a href="http://riseby.tumblr.com/">Emil Riseby</a></p>
+			<p>Some parts of the code from:</p>
+			<p><a href="http://0xfe.blogspot.se">0xFE</a></p>
+			<p><a href="http://learningwebgl.com">Learning WebGL</a></p>
+			<p><a href="https://github.com/cwilso">Chris Wilson</a></p>
+			</br></br>
+			<p> <a href="https://github.com/biggestT/avis">SourceCode (work in progress)</a></p>
+			
+		</div>
 	</div>
 	<!-- <canvas id="canvas2" width="600" height="300"></canvas> -->
 	<!-- <canvas id="canvas3" width="600" height="300"></canvas> -->

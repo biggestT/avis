@@ -10,7 +10,7 @@
     <title>AVis</title>
     <link type="text/css" href="css/smoothness/jquery-ui-1.9.2.custom.css" rel="stylesheet">
     <link type="text/css"href="css/avis.css"  rel="stylesheet" >
-
+    <script type="text/javascript" src="http://connect.soundcloud.com/sdk.js"></script>
     <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
 		<script type="text/javascript" src="js/jquery-ui-1.9.2.custom.js"></script>
     <script type="text/javascript" src="js/glMatrix-0.9.5.min.js"></script>
@@ -20,7 +20,7 @@
     <script type="text/javascript" src="js/glViewer.js"></script>
     <script type="text/javascript" src="js/avisModel.js"></script>
     <script type="text/javascript" src="js/cameracontroller.js"></script>
-     <script type="text/javascript" src="js/jquery.formdefaults.js"></script>
+    <script type="text/javascript" src="js/jquery.formdefaults.js"></script>
 
 	
 	<script id="shader-fs" type="x-shader/x-fragment">
@@ -51,56 +51,15 @@
 	var context;
 	var audioAnalyser;
 	var currentTime = 0;
+	var CLIENT_ID = '8acdc76bf6b2d52bce4ec1f2ad4f07bc';
+	var thisTrack
 
 // Run animation loop 
 	function tick() {
 		requestAnimFrame(tick);
 		glViewer.drawScene();
 		}
-	function initialize() {
-			$("#trackId").formDefaults();
-			var trackNumber = $("#trackId").val();
-
-			trackNumber = 74455115;
-			$("#trackId").hide();
-			console.log(trackNumber);
-			
-			audio = new Audio();
-			audio.src = 'https://api.soundcloud.com/tracks/' + trackNumber + '/stream.json?client_id=8acdc76bf6b2d52bce4ec1f2ad4f07bc';
-			
-			// audio.src = 'http://api.soundcloud.com/resolve.json?url=http://soundcloud.com/swagistin/lil-wayne-a-milli&client_id=8acdc76bf6b2d52bce4ec1f2ad4f07bc';
-			audio.controls = true;
-			audio.autoplay = false;
-			$('#player').append(audio);
-			$('#player').hide();
-			// $(audio).hide();
-	  	context = new webkitAudioContext();
-	  	
-	  	// Setup frequency auardioAnalyser
-	  	audioAnalyser = new AvisModel(512, 25, context);
-	  	console.log(audioAnalyser);
-
-
-	  	glViewer = new GlViewer( 'canvas1', audioAnalyser.bands, 40 );
-
-	  	audioAnalyser.addObserver( glViewer );
-
-	  	$('#accordion').accordion();
-	  	$('#accordion').accordion( "option", "collapsible", true );
-			$('#accordion').accordion( "option", "active", false );
-	  	$('#accordion').hide();
-	  	$('#canvas1').hide();
-	  	$('#soundcloudLogo').hide();
-	  	$('button').button();
-			$('#mirroring').click(glViewer.changeType);
-			$('#mirroring').hide();
-			$('#startButton').text("Start Application");
-			$('#startButton').click(play);
-			
-	}
-	
-
-	function play() {
+	function runApplication() {
 				
 			source = context.createMediaElementSource(audio);
 			console.log(source);
@@ -111,73 +70,168 @@
 		  source.connect(context.destination);
 		  
 		  audioAnalyser.enable();
-		  audio.play();
 			tick();
-			$('#soundcloudLogo').show();
-			$('#accordion').show();
-			$('#canvas1').show();
-			$('#startButton').hide();
-			$(".form-text").hide();
-			$('#player').show();
+			$('#applicationSetup').hide();
+			$('#application').show();
+		
+			$('#trackLink').text(thisTrack.title);
+			$('#trackLink').attr('href', thisTrack.permalink_url);
+			$('#artistLink').text(thisTrack.user.username);
+			$('#artistLink').attr('href', thisTrack.user.permalink_url);
+			// if ( thisTrack.artwork_url != null) {
+				// $('#trackImage').attr('src', thisTrack.artwork_url);
+				// console.log(thisTrack.artwork_url);
+			// }
 	}
 
-	function stop() {
-		// save current time
-		currentTime = context.currentTime;
-		//console.log(currentTime);
-	  // Disable visualisation and sound
-	  audioAnalyser.disable();
-	  audio.stop();
-	  $('#play').text("Play");
-	  $('#play').click(play);
-	}
+	function connectAudio(trackNumber) {
 
-	// starts everything when page is loaded
-	$(function() { 
+		audio = new Audio();
+		audio.src = 'https://api.soundcloud.com/tracks/' + trackNumber + '/stream.json?client_id=' + CLIENT_ID;
+		audio.controls = true;
+		audio.autoplay = false;
+		$('#player').append(audio);
+		// $('#player').hide();
 
-		initialize(); 
+		context = new webkitAudioContext();
+	  	
+  	// Setup frequency auardioAnalyser
+  	audioAnalyser = new AvisModel(512, 25, context);
+
+  	glViewer = new GlViewer( 'canvas1', audioAnalyser.bands, 40 );
+
+  	audioAnalyser.addObserver( glViewer );
+  	window.location.hash = trackNumber;
+
+  	// not sure but needs to wait for a while here for the audio connection to be set up
+  	// TODO remove this ugly fix
+  	window.setTimeout(runApplication, 100, true);
+  }
+
+  function getTrackNumber () {
+  	var trackURL = $("#trackId").val();
+  	SC.initialize({
+		  client_id: CLIENT_ID
+		});
+		SC.get('/resolve', { url: trackURL }, function(track, error) {
+			if (error) { printError('Error in connection to Soundcloud: ' + error.message); }
+			else if (track.kind == 'track') { 
+				thisTrack = track;
+				connectAudio(thisTrack.id); }
+			else { 
+				printError('Please enter an URL to a specific track');
+				$('#trackId').attr('value', 'enter URL to Soundcloud track');
+				$('#trackId').attr('style', 'color: rgb(204, 204, 204);');
+			}
+		});
+  }
+
+  function printError (message) {
+  		$('#messageText').append(message);
+  		$('#message').show();
+  		$('#trackId').formDefaults();
+  }
+  function initialize () {
+
+  	$('#applicationSetup').show();
+  	$('#message').hide();
+		$('#application').hide();
+  	
+		$('#startButton').text("Start Application");
+		$('#startButton').click(function() {
+				getTrackNumber();
+		});
+  } 
+	$(function() { 	
+		SC.initialize({
+		  client_id: CLIENT_ID
+		});
+		$('#applicationSetup').hide();
+		$('#accordion').accordion();
+  	$('#accordion').accordion( "option", "collapsible", true );
+		$('#accordion').accordion( "option", "active", false );
+
+ 		$('#trackId').formDefaults();
+  	$('button').button();
+  	
+		console.log(window.location.hash);
+		if (window.location.hash) {
+			var trackId = window.location.hash.substr(1,window.location.hash.length-1);
+			console.log(trackId + ' length:' + window.location.hash.length);
+		   SC.get('/tracks/' + trackId, function(track) {
+		      thisTrack = track;
+		      console.log(track);
+		      console.log(thisTrack);
+					connectAudio(thisTrack.id);
+		   });
+		}
+		else {
+			initialize();
+		}	
+
 	});
 
 	</script>
 </head>
 <body>
 	
-	<div id="startMenu">
-		<button id="startButton">A button element</button>
+
+
+	<div id="applicationSetup">
 		<div>
-			<input id="trackId" class="form-text form-default-value-processed" type="text" value="soundcloud track number" style="color: rgb(204, 204, 204);"/>
+			<input id="trackId" class="form-text form-default-value-processed" type="text" value="enter URL to Soundcloud track" style="color: rgb(204, 204, 204);"></>
 		</div>	
+		<div id="message" class="ui-widget">
+			<div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0 .7em;">
+				<p id="messageText">
+					<span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+					<!-- this is where error messages will show up -->
+				</p>
+			</div>
+		</div>
+		<button id="startButton">A button element</button>
 	</div> 
 	
-	<canvas id="canvas1" width="600" height="300"></canvas>
-	
-	<div id="player"></div>
-	<div id="soundcloud">
-		<img id="soundcloudLogo" src="images/soundcloud_logo_white.png" alt="soundcloud logo"/>
-	</div>
-	<div id="accordion">
-		<h3>Settings</h3>
-		<div>
-			<p>Coming soon ...</p>
-			<button class="settings" id="mirroring">Turn Mirroring On / Off</button>
+	<div id="application">
+		<canvas id="canvas1" width="600" height="300"></canvas>
+		
+		<div id="player"></div>
+		
+		<div id="accordion">
+			<h3>Settings</h3>
+			<div>
+				<p>Coming soon ...</p>
+				<button class="settings" id="mirroring">Turn Mirroring On / Off</button>
+			</div>
+			<h3>Credits</h3>
+			<div>
+				<p>Put together by <a href="http://tornilssonohrn.com">Tor Nilsson Öhrn</a></p>
+				<p>Music by <a href="https://soundcloud.com/klaymen-1">Klaymen</a></p>
+				<p>Original idea by <a href="http://riseby.tumblr.com/">Emil Riseby</a></p>
+				</br>
+				<p>Some parts of the code from:</p>
+				<p><a href="http://0xfe.blogspot.se">0xFE</a></p>
+				<p><a href="http://learningwebgl.com">Learning WebGL</a></p>
+				<p><a href="https://github.com/cwilso">Chris Wilson</a></p>
+				<p><a href="http://addyosmani.com/blog">Addy Osmani</a></p>
+				<p><a href="http://www.html5rocks.com/en/">HTML 5 Rocks</a></p>
+				<p><a href="http://jquery.com">jQuery</a></p>
+				</br></br>
+				<p> <a href="https://github.com/biggestT/avis">Get the code from GitHub</a></p>
+			</div>
 		</div>
-		<h3>Credits</h3>
-		<div>
-			<p>Put together by <a href="http://tornilssonohrn.com">Tor Nilsson Öhrn</a></p>
-			<p>Music by <a href="https://soundcloud.com/klaymen-1">Klaymen</a></p>
-			<p>Original idea by <a href="http://riseby.tumblr.com/">Emil Riseby</a></p>
-			<p>Some parts of the code from:</p>
-			<p><a href="http://0xfe.blogspot.se">0xFE</a></p>
-			<p><a href="http://learningwebgl.com">Learning WebGL</a></p>
-			<p><a href="https://github.com/cwilso">Chris Wilson</a></p>
-			</br></br>
-			<p> <a href="https://github.com/biggestT/avis">SourceCode (work in progress)</a></p>
-			
+		<div id="trackInfo">
+			<div class="infoLink" ><a id="trackLink"></a></div>
+			<div class="infoLink"><a  id="artistLink"></a></div>
+			<img id="trackImage" ></img>
 		</div>
 	</div>
-	<!-- <canvas id="canvas2" width="600" height="300"></canvas> -->
-	<!-- <canvas id="canvas3" width="600" height="300"></canvas> -->
 
+	<!-- Necessary referencing to SoundCloud -->
+	<div id="soundcloud">
+		<a href="https://soundcloud.com"><img id="soundcloudLogo" src="images/soundcloud_logo_white.png" alt="soundcloud logo"></img></a>
+	</div>
+	
 </body>
 
 </html>

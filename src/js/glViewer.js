@@ -195,7 +195,6 @@ GlViewer.prototype.drawLines = function (gl, shaderProgram, mirrorZ, mirrorX) {
 					var intensity = (this.spectogram[j][i]/255+0.05);
 					if (this.mirrorStyle == TYPE_STRETCH) {
 						intensity = intensity*(1-1/(this.spectogram.length/2)*(Math.abs(this.spectogram.length/2-j)));
-						console.log('inside stretch draw');
 					}
 					else {
 						intensity = intensity*2*(1/(this.spectogram.length/2)*(this.spectogram.length/2-j));

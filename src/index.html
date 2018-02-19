@@ -10,15 +10,15 @@
     <title>AVis</title>
     <link type="text/css" href="css/smoothness/jquery-ui-1.9.2.custom.css" rel="stylesheet">
     <link type="text/css"href="css/avis.css"  rel="stylesheet" >
-    <script type="text/javascript" src="http://connect.soundcloud.com/sdk.js"></script>
+    <script type="text/javascript" src="https://connect.soundcloud.com/sdk.js"></script>
     <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
 		<script type="text/javascript" src="js/jquery-ui-1.9.2.custom.js"></script>
     <script type="text/javascript" src="js/glMatrix-0.9.5.min.js"></script>
     <script type="text/javascript" src="js/webgl-utils.js"></script>
-    <script type="text/javascript" src="js/observerList.js"></script>
-    <script type="text/javascript" src="js/avisViewer.js"></script>
+    <script type="text/javascript" src="js/ObserverList.js"></script>
+    <script type="text/javascript" src="js/AvisViewer.js"></script>
     <script type="text/javascript" src="js/glViewer.js"></script>
-    <script type="text/javascript" src="js/avisModel.js"></script>
+    <script type="text/javascript" src="js/AvisModel.js"></script>
     <script type="text/javascript" src="js/cameracontroller.js"></script>
     <script type="text/javascript" src="js/jquery.formdefaults.js"></script>
 
@@ -90,10 +90,11 @@
 		audio.src = 'https://api.soundcloud.com/tracks/' + trackNumber + '/stream.json?client_id=' + CLIENT_ID;
 		audio.controls = true;
 		audio.autoplay = false;
+    audio.crossOrigin = "anonymous";
 		$('#player').append(audio);
 		// $('#player').hide();
 
-		context = new webkitAudioContext();
+		context = new AudioContext();
 	  	
   	// Setup frequency auardioAnalyser
   	audioAnalyser = new AvisModel(512, 25, context);
@@ -193,7 +194,7 @@
 	</div> 
 	
 	<div id="application">
-		<canvas id="canvas1" width="600" height="300"></canvas>
+		<canvas id="canvas1" width="1500px" height="1000px"></canvas>
 		
 		<div id="player"></div>
 		
